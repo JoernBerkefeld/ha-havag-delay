@@ -117,26 +117,39 @@ def test_station_board_request_uses_halle_local_time():
 KW = {"line": "10", "direction": "Soltauer Str.", "now": NOW}
 
 
-def test_select_departure_picks_the_one_planned_at_offset():
+def test_offset_takes_the_first_departure_predicted_at_least_that_far_ahead():
     deps = [dep(at(9, 23), 0), dep(at(9, 38), 3), dep(at(9, 53), 0)]
-    assert hafas.select_departure(deps, offset_minutes=8, **KW).planned == at(9, 38)
+    # now 09:30, offset 8 -> earliest 09:38; 09:23 has left, 09:38 is predicted 09:41
+    assert hafas.select_upcoming(deps, offset_minutes=8, **KW).planned == at(9, 38)
 
 
-def test_select_departure_closest_wins_and_tolerance_applies():
-    deps = [dep(at(9, 36), 0), dep(at(9, 39), 0)]
-    assert hafas.select_departure(deps, offset_minutes=8, **KW).planned == at(9, 39)
-    assert hafas.select_departure([dep(at(9, 53), 0)], offset_minutes=8, **KW) is None
-    assert hafas.select_departure([], offset_minutes=8, **KW) is None
+def test_offset_counts_a_late_tram_that_was_planned_earlier():
+    deps = [dep(at(9, 33), 6), dep(at(9, 42), 0)]  # first is planned 09:33, predicted 09:39
+    assert hafas.select_upcoming(deps, offset_minutes=8, **KW).planned == at(9, 33)
 
 
-def test_select_departure_ignores_other_lines_and_directions():
+def test_offset_skips_a_tram_that_is_too_soon_even_if_planned_later():
+    deps = [dep(at(9, 36), 0), dep(at(9, 40), 0)]  # 09:36 is only 6 minutes away
+    assert hafas.select_upcoming(deps, offset_minutes=8, **KW).planned == at(9, 40)
+
+
+def test_offset_compares_at_minute_resolution():
+    # Trigger fires at 09:15:00.2; the 09:23 tram must still count for an 8 minute offset.
+    now = datetime(2026, 11, 13, 9, 15, 0, 200_000, tzinfo=CET)
+    deps = [dep(at(9, 23), 0), dep(at(9, 38), 0)]
+    kw = {"line": "10", "direction": "Soltauer Str.", "now": now}
+    assert hafas.select_upcoming(deps, offset_minutes=8, **kw).planned == at(9, 23)
+
+
+def test_offset_zero_is_the_next_departure():
+    deps = [dep(at(9, 23), 0), dep(at(9, 38), 0)]
+    assert hafas.select_upcoming(deps, **KW).planned == at(9, 38)
+    assert hafas.select_upcoming(deps, offset_minutes=0, **KW) == hafas.select_upcoming(deps, **KW)
+
+
+def test_select_upcoming_ignores_other_lines_and_directions():
     deps = [dep(at(9, 38), 0, line="1"), dep(at(9, 38), 0, direction=DIR_HBF), dep(at(9, 38), 0, line="110")]
-    assert hafas.select_departure(deps, offset_minutes=8, **KW) is None
-
-
-def test_select_departure_can_return_a_cancelled_departure():
-    [d] = [dep(at(9, 38), None, cancelled=True)]
-    assert hafas.select_departure([d], offset_minutes=8, **KW).cancelled is True
+    assert hafas.select_upcoming(deps, **KW) is None
 
 
 def test_select_upcoming_uses_predicted_time():

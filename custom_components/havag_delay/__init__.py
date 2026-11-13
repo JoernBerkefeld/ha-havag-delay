@@ -19,22 +19,14 @@ from .client import HavagClient
 from .const import (
     ATTR_CONFIG_ENTRY_ID,
     ATTR_OFFSET_MINUTES,
-    ATTR_TOLERANCE_MINUTES,
     CONF_DIRECTION,
     CONF_LINE,
     CONF_STOP_ID,
-    DEFAULT_TOLERANCE_MINUTES,
     DOMAIN,
     SERVICE_GET_DEPARTURE,
     UPCOMING_WINDOW_MINUTES,
 )
-from .hafas import (
-    HafasError,
-    describe_departure,
-    describe_upcoming,
-    select_departure,
-    select_upcoming,
-)
+from .hafas import HafasError, describe_upcoming, select_upcoming
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -44,9 +36,6 @@ SERVICE_SCHEMA = vol.Schema(
     {
         vol.Optional(ATTR_CONFIG_ENTRY_ID): cv.string,
         vol.Optional(ATTR_OFFSET_MINUTES): vol.All(vol.Coerce(int), vol.Range(min=0, max=120)),
-        vol.Optional(ATTR_TOLERANCE_MINUTES, default=DEFAULT_TOLERANCE_MINUTES): vol.All(
-            vol.Coerce(int), vol.Range(min=0, max=30)
-        ),
     }
 )
 
@@ -81,26 +70,17 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         entry = _get_entry(hass, call.data.get(ATTR_CONFIG_ENTRY_ID))
         line = entry.data[CONF_LINE]
         direction = entry.data.get(CONF_DIRECTION, "")
-        offset = call.data.get(ATTR_OFFSET_MINUTES)
-        tolerance = call.data[ATTR_TOLERANCE_MINUTES]
+        offset = call.data.get(ATTR_OFFSET_MINUTES, 0)
         now = datetime.now(timezone.utc)
         client = HavagClient(async_get_clientsession(hass))
         try:
-            if offset is None:
-                deps = await client.async_departures(entry.data[CONF_STOP_ID], now, UPCOMING_WINDOW_MINUTES)
-                dep = select_upcoming(deps, line=line, direction=direction, now=now)
-                return describe_upcoming(dep, line, now)
-            window = offset + tolerance + 5
-            deps = await client.async_departures(entry.data[CONF_STOP_ID], now, window)
-            dep = select_departure(
-                deps,
-                line=line,
-                direction=direction,
-                now=now,
-                offset_minutes=offset,
-                tolerance_minutes=tolerance,
+            deps = await client.async_departures(
+                entry.data[CONF_STOP_ID], now, offset + UPCOMING_WINDOW_MINUTES
             )
-            return describe_departure(dep, line)
+            dep = select_upcoming(
+                deps, line=line, direction=direction, now=now, offset_minutes=offset
+            )
+            return describe_upcoming(dep, line, now)
         except (aiohttp.ClientError, TimeoutError, HafasError) as err:
             # Return a result instead of raising, so the notification still goes out.
             _LOGGER.warning("HAVAG request failed: %s", err)

@@ -10,8 +10,7 @@ CONF_DIRECTION = "direction"
 
 ATTR_CONFIG_ENTRY_ID = "config_entry_id"
 ATTR_OFFSET_MINUTES = "offset_minutes"
-ATTR_TOLERANCE_MINUTES = "tolerance_minutes"
 
 SERVICE_GET_DEPARTURE = "get_departure"
-DEFAULT_TOLERANCE_MINUTES = 3
+# How far past the earliest wanted departure to look for one.
 UPCOMING_WINDOW_MINUTES = 60

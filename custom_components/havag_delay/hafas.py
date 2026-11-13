@@ -142,37 +142,25 @@ def _matches(dep: Departure, line: str, direction: str) -> bool:
     return dep.line == line and direction.lower() in dep.direction.lower()
 
 
-def select_departure(
+def select_upcoming(
     departures: list[Departure],
     *,
     line: str,
     direction: str,
     now: datetime,
-    offset_minutes: int,
-    tolerance_minutes: int = 3,
+    offset_minutes: int = 0,
 ) -> Departure | None:
-    """Pick the departure planned closest to now + offset, within the tolerance."""
-    target = now + timedelta(minutes=offset_minutes)
-    tolerance = timedelta(minutes=tolerance_minutes)
-    best: Departure | None = None
-    best_diff: timedelta | None = None
-    for dep in departures:
-        if not _matches(dep, line, direction):
-            continue
-        diff = abs(dep.planned - target)
-        if diff <= tolerance and (best_diff is None or diff < best_diff):
-            best, best_diff = dep, diff
-    return best
+    """Pick the first non-cancelled departure predicted at least ``offset_minutes`` from now.
 
-
-def select_upcoming(
-    departures: list[Departure], *, line: str, direction: str, now: datetime
-) -> Departure | None:
-    """Pick the next non-cancelled departure that has not left yet (by predicted time)."""
+    Uses the predicted time, so a late tram that was planned earlier still counts and a tram
+    that has already left does not. Times have minute precision, so ``now`` is compared at
+    minute resolution (a 09:15:00 check keeps a tram predicted for 09:23 with an 8 minute offset).
+    """
+    earliest = now.replace(second=0, microsecond=0) + timedelta(minutes=offset_minutes)
     candidates = [
         d
         for d in departures
-        if not d.cancelled and _matches(d, line, direction) and d.effective >= now
+        if not d.cancelled and _matches(d, line, direction) and d.effective >= earliest
     ]
     return min(candidates, key=lambda d: d.effective, default=None)
 

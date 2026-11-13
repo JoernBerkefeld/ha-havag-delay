@@ -14,12 +14,3 @@ get_departure:
           max: 120
           mode: box
           unit_of_measurement: min
-    tolerance_minutes:
-      required: false
-      default: 3
-      selector:
-        number:
-          min: 0
-          max: 30
-          mode: box
-          unit_of_measurement: min

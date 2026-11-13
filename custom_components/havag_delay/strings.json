@@ -28,7 +28,7 @@
   "services": {
     "get_departure": {
       "name": "Get departure",
-      "description": "Returns the status of a departure of the configured line as a result for use in automations. Without an offset it is the next departure from now. With an offset it is the departure planned that many minutes from now.",
+      "description": "Returns the status of the next departure of the configured line as a result for use in automations. With an offset it is the first departure predicted at least that many minutes from now, so a late tram that was planned earlier still counts and a tram that has already left does not.",
       "fields": {
         "config_entry_id": {
           "name": "Line",
@@ -36,11 +36,7 @@
         },
         "offset_minutes": {
           "name": "Offset",
-          "description": "Minutes from now to the planned departure to look for. Leave empty for the next departure."
-        },
-        "tolerance_minutes": {
-          "name": "Tolerance",
-          "description": "How far, in minutes, the planned time may differ from now plus the offset."
+          "description": "Only consider departures predicted at least this many minutes from now (for example the time you need to walk to the stop). Leave empty or 0 for the very next departure."
         }
       }
     }

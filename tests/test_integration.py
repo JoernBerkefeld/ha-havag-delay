@@ -80,7 +80,11 @@ async def _setup(hass: HomeAssistant) -> MockConfigEntry:
 
 
 def _board(now: datetime) -> list[Departure]:
-    """A board with trams planned 8 and 23 minutes from now, the first one 2 minutes late."""
+    """A board with trams planned 8 and 23 minutes from now, the first one 2 minutes late.
+
+    The first tram is planned at ``now + 8 min`` (whole minute), so with an 8 minute offset it
+    is the first departure predicted at least 8 minutes ahead.
+    """
     first = (now + timedelta(minutes=8)).replace(second=0, microsecond=0)
     second = first + timedelta(minutes=15)
     return [

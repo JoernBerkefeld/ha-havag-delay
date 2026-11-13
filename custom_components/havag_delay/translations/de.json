@@ -28,7 +28,7 @@
   "services": {
     "get_departure": {
       "name": "Abfahrt abrufen",
-      "description": "Liefert den Status einer Abfahrt der eingerichteten Linie als Ergebnis für Automationen. Ohne Versatz ist es die nächste Abfahrt ab jetzt. Mit Versatz ist es die Abfahrt, die so viele Minuten ab jetzt geplant ist.",
+      "description": "Liefert den Status der nächsten Abfahrt der eingerichteten Linie als Ergebnis für Automationen. Mit Versatz ist es die erste Abfahrt, die voraussichtlich mindestens so viele Minuten ab jetzt fährt. Eine verspätete Bahn, die früher geplant war, zählt also noch, und eine bereits abgefahrene nicht.",
       "fields": {
         "config_entry_id": {
           "name": "Linie",
@@ -36,11 +36,7 @@
         },
         "offset_minutes": {
           "name": "Versatz",
-          "description": "Minuten ab jetzt bis zur geplanten Abfahrt. Leer lassen für die nächste Abfahrt."
-        },
-        "tolerance_minutes": {
-          "name": "Toleranz",
-          "description": "Wie weit die geplante Zeit in Minuten von jetzt plus Versatz abweichen darf."
+          "description": "Nur Abfahrten berücksichtigen, die voraussichtlich mindestens so viele Minuten ab jetzt fahren (zum Beispiel die Zeit bis zur Haltestelle). Leer lassen oder 0 für die allernächste Abfahrt."
         }
       }
     }

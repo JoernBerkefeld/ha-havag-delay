@@ -1,9 +1,9 @@
-# Mon-Fri checks at the three helper times, each for the departure planned 8 minutes later.
+# Mon-Fri checks at the three helper times, each for the first tram predicted at least 8 minutes later.
 # Replace notify.mobile_app_YOUR_PHONE and notify.alexa_media_YOUR_ECHO with your real services
 # (Developer Tools > Actions, search "notify."). Needs HA 2024.10+.
 
 alias: HAVAG Linie 10 Verspätung
-description: Mon-Fri delay check for the departure planned 8 minutes after the check time
+description: Mon-Fri delay check for the first tram predicted at least 8 minutes after the check time
 mode: single
 triggers:
   - trigger: time

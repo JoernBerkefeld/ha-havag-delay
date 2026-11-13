@@ -20,9 +20,10 @@ Returns a result for use in automations. Nothing is cached: each call fetches li
 
 | Field | Meaning |
 |---|---|
-| `offset_minutes` (optional) | Look for the departure planned this many minutes from now (± `tolerance_minutes`, default 3). Leave it out to get the **next departure from now**. |
-| `tolerance_minutes` (optional) | Allowed difference between the planned time and now + offset. |
+| `offset_minutes` (optional) | Only consider departures predicted at least this many minutes from now, for example the time you need to reach the stop. Leave it out (or 0) for the very next departure. |
 | `config_entry_id` (optional) | Which line to use. Only needed if you set up several. |
+
+The action always returns the **next tram to arrive, by predicted time** (cancelled ones are skipped). A late tram that was planned earlier still counts while it has not left yet, and a tram that has already gone does not. With and without an offset the same rule applies, so the two never disagree. Times have minute precision, so "now" is compared at minute resolution: a check at 09:15 with an offset of 8 includes a tram predicted for 09:23.
 
 Result:
 
@@ -32,7 +33,7 @@ planned: "2026-11-13T09:38:00+01:00"
 actual: "2026-11-13T09:41:00+01:00"
 delay_minutes: 3
 cancelled: false
-in_minutes: 11           # only without offset_minutes
+in_minutes: 11           # minutes until the predicted departure
 text: "Linie 10 um 09:38 geplant, tatsächlich 09:41 (3 Minuten verspätet). Abfahrt in 11 Min."
 ```
 
@@ -53,7 +54,7 @@ actions:
 
 ## Examples
 
-- `examples/automation-morning.yaml`: Mon-Fri checks at three times, each for the departure planned 8 minutes later, to a phone and Alexa.
+- `examples/automation-morning.yaml`: Mon-Fri checks at three times, each for the first tram predicted at least 8 minutes later, to a phone and Alexa.
 - `examples/automation-door.yaml`: when a door opens in a time window, send the next departure to one phone in the morning and another in the afternoon.
 - `examples/helpers.yaml`: the three editable check times.
 
