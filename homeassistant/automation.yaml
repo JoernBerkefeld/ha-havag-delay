@@ -1,0 +1,41 @@
+# Paste into automations.yaml (or create via UI > YAML mode).
+# Needs HA 2024.10+ (new trigger/action syntax; response_variable for rest_command).
+# Replace notify.mobile_app_YOUR_PHONE and notify.alexa_media_YOUR_ECHO with your real services
+# (Developer Tools > Actions, search "notify.").
+
+alias: HAVAG Linie 10 Verspätung
+description: Mon-Fri delay check for line 10 towards Soltauer Str. (departure 8 min after the check)
+mode: single
+triggers:
+  - trigger: time
+    at: input_datetime.havag_check_1
+  - trigger: time
+    at: input_datetime.havag_check_2
+  - trigger: time
+    at: input_datetime.havag_check_3
+conditions:
+  - condition: time
+    weekday:
+      - mon
+      - tue
+      - wed
+      - thu
+      - fri
+actions:
+  - action: rest_command.havag_next
+    response_variable: havag
+    # Keep going if the service is down or times out, so a notification is still sent.
+    continue_on_error: true
+  - variables:
+      message: >-
+        {{ havag.content.text if havag is defined and havag.status == 200 and havag.content is mapping
+           else 'Die Fahrplanauskunft ist gerade nicht erreichbar.' }}
+  - action: notify.mobile_app_YOUR_PHONE
+    data:
+      title: Straßenbahn Linie 10
+      message: "{{ message }}"
+  - action: notify.alexa_media_YOUR_ECHO
+    data:
+      message: "{{ message }}"
+      data:
+        type: announce

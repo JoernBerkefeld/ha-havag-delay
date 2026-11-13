@@ -1,0 +1,20 @@
+{
+  "name": "ha-havag-delay",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "HTTP service reporting live HAVAG departure delays for Home Assistant",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node src/server.mjs",
+    "find-stop": "node scripts/find-stop.mjs",
+    "test": "node --test tests/*.test.mjs"
+  },
+  "license": "MIT",
+  "author": "Jörn Berkefeld <joern.berkefeld@gmail.com>",
+  "dependencies": {
+    "hafas-client": "^6.3.6"
+  }
+}

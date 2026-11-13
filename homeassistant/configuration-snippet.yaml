@@ -1,0 +1,32 @@
+# Add to configuration.yaml (or the matching include files).
+# Replace the host with the add-on hostname shown on the add-on's Info page
+# (normally local-havag-delay) or with the HA host IP and port 8099.
+
+input_datetime:
+  havag_check_1:
+    name: HAVAG check 1
+    has_date: false
+    has_time: true
+    initial: "09:15:00"
+  havag_check_2:
+    name: HAVAG check 2
+    has_date: false
+    has_time: true
+    initial: "09:30:00"
+  havag_check_3:
+    name: HAVAG check 3
+    has_date: false
+    has_time: true
+    initial: "09:45:00"
+
+rest_command:
+  # Scheduled checks: the line 10 departure planned 8 minutes after the check time.
+  havag_next:
+    url: "http://local-havag-delay:8099/next?line=10&direction=Soltauer%20Str.&offset=8"
+    method: get
+    timeout: 20
+  # Door-open notifications: the next line 10 departure from now on.
+  havag_upcoming:
+    url: "http://local-havag-delay:8099/upcoming?line=10&direction=Soltauer%20Str."
+    method: get
+    timeout: 20
