@@ -1,60 +1,75 @@
-# ha-havag-delay
+# HAVAG Delay
 
-Small HTTP service that reports the live delay of a HAVAG departure, for use in Home Assistant notifications.
+Home Assistant custom integration that tells automations whether a HAVAG (Halle/Saale) tram or bus is on time, and how late it is.
 
-Default setup: line **10** towards **Soltauer Str.** at **Halle (Saale), Betriebshof Freiimfelder Str.** (stop ID `3937`). Each call looks up the line 10 departure scheduled **8 minutes** from now (±3 min) and returns its actual time and delay.
+It reads the live data of the INSA timetable service (the same data the official app shows). The endpoint is unofficial, so use it for personal automations and keep the call rate low.
 
-Data comes from the INSA HAFAS endpoint through `hafas-client`. It is unofficial, so the service caches for 45 s. Do not poll it more often than about once a minute.
+## Install with HACS
 
-## API
+1. HACS > three-dot menu > **Custom repositories**.
+2. Add `https://github.com/JoernBerkefeld/ha-havag-delay` as category **Integration**.
+3. Find **HAVAG Delay** in HACS, download it, restart Home Assistant.
+4. Settings > Devices & services > **Add integration** > **HAVAG Delay**.
+5. Enter a stop name (for example `Betriebshof Freiimfelder`), the line (`10`) and optionally a direction (`Soltauer Str.`, a part of the destination name). Pick the stop from the results.
 
-`GET /next?stop=&line=&direction=&offset=&tolerance=` (all optional, defaults in `config.json`): the departure planned `offset` minutes from now.
+Set up one entry per line and direction.
 
-`GET /upcoming?stop=&line=&direction=`: the next non-cancelled departure from now on; the reply adds `inMinutes`.
+## The action `havag_delay.get_departure`
 
-```json
-{
-    "status": "delayed",
-    "planned": "2026-11-13T09:38:00+01:00",
-    "actual": "2026-11-13T09:41:00+01:00",
-    "delayMinutes": 3,
-    "cancelled": false,
-    "text": "Linie 10 um 09:38 geplant, tatsächlich 09:41 (3 Minuten verspätet)."
-}
+Returns a result for use in automations. Nothing is cached: each call fetches live data.
+
+| Field | Meaning |
+|---|---|
+| `offset_minutes` (optional) | Look for the departure planned this many minutes from now (± `tolerance_minutes`, default 3). Leave it out to get the **next departure from now**. |
+| `tolerance_minutes` (optional) | Allowed difference between the planned time and now + offset. |
+| `config_entry_id` (optional) | Which line to use. Only needed if you set up several. |
+
+Result:
+
+```yaml
+status: delayed          # on-time | delayed | cancelled | no-realtime | not-found | error
+planned: "2026-11-13T09:38:00+01:00"
+actual: "2026-11-13T09:41:00+01:00"
+delay_minutes: 3
+cancelled: false
+in_minutes: 11           # only without offset_minutes
+text: "Linie 10 um 09:38 geplant, tatsächlich 09:41 (3 Minuten verspätet). Abfahrt in 11 Min."
 ```
 
-`status` is one of `on-time`, `delayed`, `cancelled`, `no-realtime`, `not-found`, `error`.
+If the timetable service cannot be reached, the action returns `status: error` with a message in `text` instead of failing, so a notification still goes out.
 
-## Another stop or line
+Use it with `response_variable`:
+
+```yaml
+actions:
+  - action: havag_delay.get_departure
+    data:
+      offset_minutes: 8
+    response_variable: havag
+  - action: notify.mobile_app_YOUR_PHONE
+    data:
+      message: "{{ havag.text }}"
+```
+
+## Examples
+
+- `examples/automation-morning.yaml`: Mon-Fri checks at three times, each for the departure planned 8 minutes later, to a phone and Alexa.
+- `examples/automation-door.yaml`: when a door opens in a time window, send the next departure to one phone in the morning and another in the afternoon.
+- `examples/helpers.yaml`: the three editable check times.
+
+Replace the `YOUR_...` placeholders with your own notify services and door sensor.
+
+## Development
 
 ```bash
-npm run find-stop -- "Marktplatz"
+pip install -r requirements_test.txt
+pytest
 ```
 
-Put the printed ID in `config.json` (`stop`) or pass `stop=`, `line=`, `direction=` in the URL of the Home Assistant `rest_command`.
-
-## Run locally
+The Home Assistant test plugin needs Linux. On Windows, run the pure logic tests only:
 
 ```bash
-npm ci --no-workspaces
-npm test
-npm start
+PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest tests/test_hafas.py --noconftest
 ```
 
-## Install on Home Assistant OS
-
-1. Copy this folder (without `node_modules`) to the `addons` share of Home Assistant, for example `\\homeassistant\addons\havag_delay`.
-2. Settings > Add-ons > Add-on Store > menu > Check for updates. Under "Local add-ons", install **HAVAG Delay** and start it.
-3. Note the add-on hostname on its Info page. Use it in the `url` of `rest_command.havag_next`. If it differs from `local-havag-delay`, change it.
-4. Add `homeassistant/configuration-snippet.yaml` to `configuration.yaml` and restart.
-5. Create the automation from `homeassistant/automation.yaml` and replace the two notify services.
-
-The three check times (default 09:15, 09:30, 09:45, Monday to Friday) are the helpers `input_datetime.havag_check_1..3`. Edit them under Settings > Devices & services > Helpers. Note: `initial` in the snippet resets them to these defaults on every Home Assistant restart; remove `initial` once you have set your own times in the UI.
-
-## Door notifications
-
-`homeassistant/automation-door.yaml` sends the next line 10 departure (`/upcoming`, no offset) when a door contact opens: 09:15-10:15 to your phone, 14:30-15:30 to your wife's phone, with a 10-minute cooldown. Replace the door sensor and both notify placeholders.
-
-## Test without waiting
-
-Developer Tools > Actions: run `rest_command.havag_next` and read the response, or run the automation manually.
+The earlier Node.js and add-on version is in the git history.

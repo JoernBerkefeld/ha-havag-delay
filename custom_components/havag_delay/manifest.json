@@ -1,0 +1,12 @@
+{
+  "domain": "havag_delay",
+  "name": "HAVAG Delay",
+  "codeowners": ["@JoernBerkefeld"],
+  "config_flow": true,
+  "documentation": "https://github.com/JoernBerkefeld/ha-havag-delay",
+  "integration_type": "service",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/JoernBerkefeld/ha-havag-delay/issues",
+  "requirements": [],
+  "version": "0.1.0"
+}

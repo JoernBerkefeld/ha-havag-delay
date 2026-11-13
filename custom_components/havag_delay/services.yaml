@@ -1,0 +1,25 @@
+get_departure:
+  fields:
+    config_entry_id:
+      required: false
+      selector:
+        config_entry:
+          integration: havag_delay
+    offset_minutes:
+      required: false
+      example: 8
+      selector:
+        number:
+          min: 0
+          max: 120
+          mode: box
+          unit_of_measurement: min
+    tolerance_minutes:
+      required: false
+      default: 3
+      selector:
+        number:
+          min: 0
+          max: 30
+          mode: box
+          unit_of_measurement: min

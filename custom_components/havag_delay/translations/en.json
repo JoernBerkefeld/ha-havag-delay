@@ -1,0 +1,48 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "HAVAG line",
+        "description": "Search for your stop, then name the line and (optionally) a direction.",
+        "data": {
+          "stop_query": "Stop name",
+          "line": "Line number",
+          "direction": "Direction (part of the destination name, optional)"
+        }
+      },
+      "pick_stop": {
+        "title": "Pick the stop",
+        "data": {
+          "stop_id": "Stop"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "The timetable service could not be reached.",
+      "no_results": "No stop found with that name."
+    },
+    "abort": {
+      "already_configured": "This stop, line and direction is already set up."
+    }
+  },
+  "services": {
+    "get_departure": {
+      "name": "Get departure",
+      "description": "Returns the status of a departure of the configured line as a result for use in automations. Without an offset it is the next departure from now. With an offset it is the departure planned that many minutes from now.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Line",
+          "description": "Which configured line to use. Only needed when several are set up."
+        },
+        "offset_minutes": {
+          "name": "Offset",
+          "description": "Minutes from now to the planned departure to look for. Leave empty for the next departure."
+        },
+        "tolerance_minutes": {
+          "name": "Tolerance",
+          "description": "How far, in minutes, the planned time may differ from now plus the offset."
+        }
+      }
+    }
+  }
+}

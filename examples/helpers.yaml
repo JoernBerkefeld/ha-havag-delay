@@ -1,0 +1,21 @@
+# Optional: three editable check times. Add to configuration.yaml, or create the same
+# "Date and/or time" helpers in Settings > Devices & services > Helpers (time only).
+# `initial` resets the times on every Home Assistant restart. Remove it after you have set
+# your own times in the UI.
+
+input_datetime:
+  havag_check_1:
+    name: HAVAG check 1
+    has_date: false
+    has_time: true
+    initial: "09:15:00"
+  havag_check_2:
+    name: HAVAG check 2
+    has_date: false
+    has_time: true
+    initial: "09:30:00"
+  havag_check_3:
+    name: HAVAG check 3
+    has_date: false
+    has_time: true
+    initial: "09:45:00"

@@ -1,17 +1,17 @@
-# Door-open notifications with the next line 10 departure. Paste into automations.yaml.
+# Door-open notifications with the next departure. Needs HA 2024.10+.
 # Replace:
 #   binary_sensor.YOUR_DOOR_SENSOR      the door contact sensor ("on" = open)
 #   notify.mobile_app_YOUR_PHONE        your phone
 #   notify.mobile_app_WIFES_PHONE       your wife's phone
 #
 # 09:15-10:15 -> your phone, 14:30-15:30 -> your wife's phone.
-# Not restricted to weekdays. To limit it, add a weekday time condition like in automation.yaml.
-# Cooldown: at most one notification per 10 minutes, so a door opened several times in a row
-# does not send several messages. Change 600 (seconds) or remove that condition.
+# Not restricted to weekdays. To limit it, add a weekday time condition like in
+# automation-morning.yaml.
+# Cooldown: at most one notification per 10 minutes. Change 600 (seconds) or remove it.
 # The time windows are conditions on purpose: a door opened outside them does not start the cooldown.
 
 alias: HAVAG Tür geöffnet – nächste Linie 10
-description: Sends the next line 10 departure when the door opens in the morning or afternoon window
+description: Sends the next departure when the door opens in the morning or afternoon window
 mode: single
 triggers:
   - trigger: state
@@ -31,17 +31,12 @@ conditions:
       {{ this.attributes.last_triggered is none
          or (now() - this.attributes.last_triggered).total_seconds() > 600 }}
 actions:
-  - action: rest_command.havag_upcoming
+  # No offset: the next departure from now on, with its delay and minutes until it leaves.
+  - action: havag_delay.get_departure
     response_variable: havag
-    # Keep going if the service is down or times out, so a notification is still sent.
-    continue_on_error: true
-  - variables:
-      message: >-
-        {{ havag.content.text if havag is defined and havag.status == 200 and havag.content is mapping
-           else 'Die Fahrplanauskunft ist gerade nicht erreichbar.' }}
   - action: >-
       {{ 'notify.mobile_app_YOUR_PHONE' if now().hour < 12
          else 'notify.mobile_app_WIFES_PHONE' }}
     data:
       title: Straßenbahn Linie 10
-      message: "{{ message }}"
+      message: "{{ havag.text }}"
