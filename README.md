@@ -12,7 +12,39 @@ It reads the live data of the INSA timetable service (the same data the official
 4. Settings > Devices & services > **Add integration** > **HAVAG Delay**.
 5. Enter a stop name (for example `Betriebshof Freiimfelder`), the line (`10`) and optionally a direction (`Soltauer Str.`, a part of the destination name). Pick the stop from the results.
 
-Set up one entry per line and direction.
+## Several stops and lines
+
+Add the integration as often as you like: **one entry per stop, line and direction**. Repeat step 4 and 5 for every case you want to check, for example:
+
+| Entry | Stop | Line | Direction |
+|---|---|---|---|
+| 1 | Betriebshof Freiimfelder Str. | 10 | Soltauer Str. |
+| 2 | Hauptbahnhof | 5 | Heide-Süd |
+| 3 | Marktplatz | 7 | (any) |
+
+The same stop with another line, or the same line in the other direction, is a separate entry. Setting up the exact same stop, line and direction twice is refused.
+
+The direction is optional. Leave it empty to take the next tram of the line in either direction.
+
+Each entry shows up under its own title (for example `Linie 10 · Halle (Saale), Betriebshof Freiimfelder Str. → Soltauer Str.`).
+
+**Choosing the entry in an automation.** With a single entry, the action just works. As soon as you have several, pass `config_entry_id` so the action knows which one to check; without it the action refuses to guess. In the automation editor, pick the entry in the **Line** dropdown of the action. In YAML mode, that dropdown writes the id for you:
+
+```yaml
+actions:
+  - action: havag_delay.get_departure
+    data:
+      config_entry_id: 01J9XXXXXXXXXXXXXXXXXXXXXX   # copy it from the editor's YAML mode
+      offset_minutes: 8
+    response_variable: work
+  - action: havag_delay.get_departure
+    data:
+      config_entry_id: 01J9YYYYYYYYYYYYYYYYYYYYYY
+    response_variable: school
+  - action: notify.mobile_app_YOUR_PHONE
+    data:
+      message: "{{ work.text }} {{ school.text }}"
+```
 
 ## The action `havag_delay.get_departure`
 
@@ -21,7 +53,7 @@ Returns a result for use in automations. Nothing is cached: each call fetches li
 | Field | Meaning |
 |---|---|
 | `offset_minutes` (optional) | Only consider departures predicted at least this many minutes from now, for example the time you need to reach the stop. Leave it out (or 0) for the very next departure. |
-| `config_entry_id` (optional) | Which line to use. Only needed if you set up several. |
+| `config_entry_id` (optional) | Which entry (stop, line and direction) to use. Only needed if you set up several, see [Several stops and lines](#several-stops-and-lines). |
 
 The action always returns the **next tram to arrive, by predicted time** (cancelled ones are skipped). A late tram that was planned earlier still counts while it has not left yet, and a tram that has already gone does not. With and without an offset the same rule applies, so the two never disagree. Times have minute precision, so "now" is compared at minute resolution: a check at 09:15 with an offset of 8 includes a tram predicted for 09:23.
 
